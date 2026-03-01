@@ -1,0 +1,79 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Filme {
+  id                 String   @id @default(uuid())
+  titulo             String
+  duracao            Int      // em minutos
+  sinopse            String
+  genero             String
+  elenco             String
+  dataInicioExibicao DateTime
+  dataFimExibicao    DateTime
+  status             String
+  sessoes            Sessao[]
+}
+
+model Sala {
+  id         String   @id @default(uuid())
+  numero     Int      @unique
+  capacidade Int
+  sessoes    Sessao[]
+}
+
+model Sessao {
+  id            String     @id @default(uuid())
+  filmeId       String
+  salaId        String
+  data          DateTime
+  horario       String
+  valorIngresso Float
+  filme         Filme      @relation(fields: [filmeId], references: [id])
+  sala          Sala       @relation(fields: [salaId], references: [id])
+  ingressos     Ingresso[]
+}
+
+model LancheCombo {
+  id            String             @id @default(uuid())
+  nome          String
+  valorUnitario Float
+  estoque       Int
+  pedidos       ItemPedidoLanche[]
+}
+
+model Pedido {
+  id         String             @id @default(uuid())
+  valorTotal Float
+  qtdInteira Int
+  qtdMeia    Int
+  ingressos  Ingresso[]
+  lanches    ItemPedidoLanche[]
+}
+
+model ItemPedidoLanche {
+  id            String      @id @default(uuid())
+  pedidoId      String
+  lancheComboId String
+  quantidade    Int
+  precoUnitario Float
+  pedido        Pedido      @relation(fields: [pedidoId], references: [id])
+  lancheCombo   LancheCombo @relation(fields: [lancheComboId], references: [id])
+}
+
+model Ingresso {
+  id       String @id @default(uuid())
+  pedidoId String
+  sessaoId String
+  poltrona String
+  pedido   Pedido @relation(fields: [pedidoId], references: [id])
+  sessao   Sessao @relation(fields: [sessaoId], references: [id])
+}
