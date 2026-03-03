@@ -6,7 +6,7 @@ services:
     container_name: cineweb-db
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
+      POSTGRES_PASSWORD: 60451
       POSTGRES_DB: cineweb
     ports:
       - '5432:5432'
