@@ -1,12 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Prisma } from '@prisma/client';
+import { CreateFilmeDto } from './dto/create-filme.dto';
+import { UpdateFilmeDto } from './dto/update-filme.dto';
 
 @Injectable()
 export class FilmesService {
     constructor(private prisma: PrismaService) { }
 
-    async create(data: Prisma.FilmeCreateInput) {
+    async create(data: CreateFilmeDto) {
         return this.prisma.filme.create({ data });
     }
 
@@ -20,7 +21,7 @@ export class FilmesService {
         return filme;
     }
 
-    async update(id: string, data: Prisma.FilmeUpdateInput) {
+    async update(id: string, data: UpdateFilmeDto) {
         await this.findOne(id); // Garante que existe
         return this.prisma.filme.update({ where: { id }, data });
     }

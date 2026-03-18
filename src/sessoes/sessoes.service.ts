@@ -1,12 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Prisma } from '@prisma/client';
+import { CreateSessaoDto } from './dto/create-sessao.dto';
+import { UpdateSessaoDto } from './dto/update-sessao.dto';
 
 @Injectable()
 export class SessoesService {
     constructor(private prisma: PrismaService) { }
 
-    async create(data: Prisma.SessaoUncheckedCreateInput) {
+    async create(data: CreateSessaoDto) {
         return this.prisma.sessao.create({ data });
     }
 
@@ -23,7 +24,7 @@ export class SessoesService {
         return sessao;
     }
 
-    async update(id: string, data: Prisma.SessaoUncheckedUpdateInput) {
+    async update(id: string, data: UpdateSessaoDto) {
         await this.findOne(id);
         return this.prisma.sessao.update({ where: { id }, data });
     }

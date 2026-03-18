@@ -1,21 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Prisma } from '@prisma/client';
+import { CreatePedidoDto } from './dto/create-pedido.dto';
+import { UpdatePedidoDto } from './dto/update-pedido.dto';
 
 @Injectable()
 export class PedidosService {
     constructor(private prisma: PrismaService) { }
 
-    async create(data: any) {
-        // Exemplo de payload esperado no data:
-        // {
-        //   valorTotal: 50.0,
-        //   qtdInteira: 1,
-        //   qtdMeia: 0,
-        //   ingressos: [{ sessaoId: 'uuid', poltrona: 'A1' }],
-        //   lanches: [{ lancheComboId: 'uuid', quantidade: 2, precoUnitario: 15.0 }]
-        // }
-
+    async create(data: CreatePedidoDto) {
         return this.prisma.pedido.create({
             data: {
                 valorTotal: data.valorTotal,
@@ -50,10 +42,8 @@ export class PedidosService {
         return pedido;
     }
 
-    async update(id: string, data: any) {
+    async update(id: string, data: UpdatePedidoDto) {
         await this.findOne(id);
-        // Para simplificar, o update básico atualiza apenas dados do pedido.
-        // Atualização de nested objects exigiria lógica extra de delete/create (sync).
         return this.prisma.pedido.update({
             where: { id },
             data: {
@@ -66,9 +56,6 @@ export class PedidosService {
 
     async remove(id: string) {
         await this.findOne(id);
-        // Como há relacionamentos restritos, cascata é necessária. 
-        // Com prisma default (se onDelete: Cascade não for explicitamente declarado),
-        // devemos excluir os filhos primeiro ou configurar schema.
         await this.prisma.ingresso.deleteMany({ where: { pedidoId: id } });
         await this.prisma.itemPedidoLanche.deleteMany({ where: { pedidoId: id } });
         return this.prisma.pedido.delete({ where: { id } });

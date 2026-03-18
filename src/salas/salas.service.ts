@@ -1,12 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Prisma } from '@prisma/client';
+import { CreateSalaDto } from './dto/create-sala.dto';
+import { UpdateSalaDto } from './dto/update-sala.dto';
 
 @Injectable()
 export class SalasService {
     constructor(private prisma: PrismaService) { }
 
-    async create(data: Prisma.SalaCreateInput) {
+    async create(data: CreateSalaDto) {
         return this.prisma.sala.create({ data });
     }
 
@@ -20,7 +21,7 @@ export class SalasService {
         return sala;
     }
 
-    async update(id: string, data: Prisma.SalaUpdateInput) {
+    async update(id: string, data: UpdateSalaDto) {
         await this.findOne(id);
         return this.prisma.sala.update({ where: { id }, data });
     }
