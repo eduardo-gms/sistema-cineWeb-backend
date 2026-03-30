@@ -16,4 +16,9 @@ export class CreateIngressoDto {
     @IsString()
     @IsNotEmpty()
     poltrona: string;
+
+    @ApiProperty({ description: 'Tipo do ingresso', example: 'Inteira', enum: ['Inteira', 'Meia'] })
+    @IsString()
+    @IsNotEmpty()
+    tipo: string;
 }

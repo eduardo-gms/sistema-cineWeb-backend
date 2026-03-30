@@ -9,17 +9,25 @@ datasource db {
   provider = "postgresql"
 }
 
+model Genero {
+  id     String  @id @default(uuid())
+  nome   String  @unique
+  filmes Filme[]
+}
+
 model Filme {
-  id                 String   @id @default(uuid())
-  titulo             String
-  duracao            Int      // em minutos
-  sinopse            String
-  genero             String
-  elenco             String
-  dataInicioExibicao DateTime
-  dataFimExibicao    DateTime
-  status             String
-  sessoes            Sessao[]
+  id                  String   @id @default(uuid())
+  titulo              String
+  duracao             Int // em minutos
+  sinopse             String
+  elenco              String
+  generoId            String
+  classificacaoEtaria String
+  dataInicioExibicao  DateTime
+  dataFimExibicao     DateTime
+  status              String
+  genero              Genero   @relation(fields: [generoId], references: [id])
+  sessoes             Sessao[]
 }
 
 model Sala {
@@ -44,6 +52,7 @@ model Sessao {
 model LancheCombo {
   id            String             @id @default(uuid())
   nome          String
+  descricao     String
   valorUnitario Float
   estoque       Int
   pedidos       ItemPedidoLanche[]
@@ -54,6 +63,7 @@ model Pedido {
   valorTotal Float
   qtdInteira Int
   qtdMeia    Int
+  dataHora   DateTime           @default(now())
   ingressos  Ingresso[]
   lanches    ItemPedidoLanche[]
 }
@@ -69,10 +79,12 @@ model ItemPedidoLanche {
 }
 
 model Ingresso {
-  id       String @id @default(uuid())
-  pedidoId String
-  sessaoId String
-  poltrona String
-  pedido   Pedido @relation(fields: [pedidoId], references: [id])
-  sessao   Sessao @relation(fields: [sessaoId], references: [id])
+  id        String @id @default(uuid())
+  pedidoId  String
+  sessaoId  String
+  poltrona  String
+  tipo      String
+  valorPago Float
+  pedido    Pedido @relation(fields: [pedidoId], references: [id])
+  sessao    Sessao @relation(fields: [sessaoId], references: [id])
 }

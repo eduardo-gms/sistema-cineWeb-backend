@@ -12,6 +12,11 @@ class IngressoItemDto {
     @IsString()
     @IsNotEmpty()
     poltrona: string;
+
+    @ApiProperty({ description: 'Tipo do ingresso, inteira ou meia', example: 'Inteira', enum: ['Inteira', 'Meia'] })
+    @IsString()
+    @IsNotEmpty()
+    tipo: string;
 }
 
 class LancheItemDto {
@@ -24,28 +29,18 @@ class LancheItemDto {
     @IsInt()
     @IsNotEmpty()
     quantidade: number;
-
-    @ApiProperty({ description: 'Preço unitário no momento da compra', example: 15.0 })
-    @IsNumber()
-    @IsNotEmpty()
-    precoUnitario: number;
 }
 
 export class CreatePedidoDto {
-    @ApiProperty({ description: 'Valor total do pedido', example: 50.0 })
-    @IsNumber()
-    @IsNotEmpty()
-    valorTotal: number;
-
     @ApiProperty({ description: 'Quantidade de ingressos inteiros', example: 1 })
     @IsInt()
-    @IsNotEmpty()
-    qtdInteira: number;
+    @IsOptional()
+    qtdInteira?: number;
 
     @ApiProperty({ description: 'Quantidade de ingressos meia-entrada', example: 0 })
     @IsInt()
-    @IsNotEmpty()
-    qtdMeia: number;
+    @IsOptional()
+    qtdMeia?: number;
 
     @ApiProperty({ description: 'Lista de ingressos adquiridos no pedido', type: [IngressoItemDto], required: false })
     @IsArray()

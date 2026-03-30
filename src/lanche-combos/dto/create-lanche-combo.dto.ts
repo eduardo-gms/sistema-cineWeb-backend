@@ -7,6 +7,11 @@ export class CreateLancheComboDto {
     @IsNotEmpty()
     nome: string;
 
+    @ApiProperty({ description: 'Descrição detalhada do lanche', example: '1 Pipoca Grande, 2 Refrigerantes 500ml' })
+    @IsString()
+    @IsNotEmpty()
+    descricao: string;
+
     @ApiProperty({ description: 'Valor unitário do lanche ou combo', example: 45.90 })
     @IsNumber()
     @IsNotEmpty()

@@ -17,10 +17,15 @@ export class CreateFilmeDto {
     @IsNotEmpty()
     sinopse: string;
 
-    @ApiProperty({ description: 'Gênero do filme', example: 'Aventura/Fantasia' })
+    @ApiProperty({ description: 'ID do gênero do filme', example: 'uuid-genero' })
     @IsString()
     @IsNotEmpty()
-    genero: string;
+    generoId: string;
+
+    @ApiProperty({ description: 'Classificação etária do filme', example: 'Livre, 10, 12, 14, 16, 18' })
+    @IsString()
+    @IsNotEmpty()
+    classificacaoEtaria: string;
 
     @ApiProperty({ description: 'Atores principais', example: 'Elijah Wood, Ian McKellen, Orlando Bloom' })
     @IsString()
