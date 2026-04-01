@@ -12,13 +12,23 @@ export class PedidosService {
         let inteira = 0;
         let meia = 0;
 
-        const lanchesParaCriar: any[] = [];
+        return this.prisma.$transaction(async (tx) => {
+            const lanchesParaCriar: any[] = [];
         for (const item of (data.lanches || [])) {
-            const lancheBd = await this.prisma.lancheCombo.findUnique({
+            const lancheBd = await tx.lancheCombo.findUnique({
                 where: { id: item.lancheComboId },
             });
             if (!lancheBd) throw new NotFoundException(`Lanche/Combo ${item.lancheComboId} não encontrado`);
-            
+            if (lancheBd.estoque < item.quantidade) {
+                throw new BadRequestException(`Estoque insuficiente para o Lanche/Combo ${lancheBd.nome}`);
+            }
+
+            // Decrementa o estoque
+            await tx.lancheCombo.update({
+                where: { id: item.lancheComboId },
+                data: { estoque: lancheBd.estoque - item.quantidade }
+            });
+
             valorTotalCalculado += lancheBd.valorUnitario * item.quantidade;
             lanchesParaCriar.push({
                 lancheComboId: item.lancheComboId,
@@ -33,13 +43,13 @@ export class PedidosService {
         }
 
         for (const sessaoId of Object.keys(demandaSessoes)) {
-            const sessao = await this.prisma.sessao.findUnique({
+            const sessao = await tx.sessao.findUnique({
                 where: { id: sessaoId },
                 include: { sala: true },
             });
             if (!sessao) throw new BadRequestException(`Sessão ${sessaoId} não encontrada`);
             
-            const vendidos = await this.prisma.ingresso.count({ where: { sessaoId } });
+            const vendidos = await tx.ingresso.count({ where: { sessaoId } });
             if (vendidos + demandaSessoes[sessaoId] > sessao.sala.capacidade) {
                 throw new BadRequestException(`Sessão esgotada. Não há capacidade para ${demandaSessoes[sessaoId]} novo(s) ingresso(s).`);
             }
@@ -47,7 +57,7 @@ export class PedidosService {
 
         const ingressosParaCriar: any[] = [];
         for (const ing of (data.ingressos || [])) {
-            const sessaoBd = await this.prisma.sessao.findUnique({
+            const sessaoBd = await tx.sessao.findUnique({
                 where: { id: ing.sessaoId },
             });
 
@@ -68,7 +78,7 @@ export class PedidosService {
             });
         }
 
-        return this.prisma.pedido.create({
+        return tx.pedido.create({
             data: {
                 valorTotal: valorTotalCalculado,
                 qtdInteira: inteira,
@@ -77,6 +87,7 @@ export class PedidosService {
                 lanches: { create: lanchesParaCriar }
             },
             include: { ingressos: true, lanches: true }
+        });
         });
     }
 

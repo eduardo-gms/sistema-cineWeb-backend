@@ -1,6 +1,21 @@
 version: '3.8'
 
 services:
+  backend:
+    build: .
+    container_name: cineweb-backend
+    ports:
+      - '3000:3000'
+    environment:
+      - DATABASE_URL=postgresql://postgres:60451@cineweb-db:5432/cineweb?schema=public
+    networks:
+      - cineweb-network
+    depends_on:
+      - db
+    volumes:
+      - .:/app
+      - /app/node_modules
+
   db:
     image: postgres:15
     container_name: cineweb-db
@@ -10,9 +25,15 @@ services:
       POSTGRES_DB: cineweb
     ports:
       - '5432:5432'
+    networks:
+      - cineweb-network
     volumes:
       - pgdata:/var/lib/postgresql/data
     restart: always
 
 volumes:
   pgdata:
+
+networks:
+  cineweb-network:
+    external: true
