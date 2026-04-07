@@ -86,21 +86,30 @@ export class PedidosService {
                 ingressos: { create: ingressosParaCriar },
                 lanches: { create: lanchesParaCriar }
             },
-            include: { ingressos: true, lanches: true }
+            include: { 
+                ingressos: { include: { sessao: { include: { filme: true, sala: true } } } }, 
+                lanches: { include: { lancheCombo: true } } 
+            }
         });
         });
     }
 
     async findAll() {
         return this.prisma.pedido.findMany({
-            include: { ingressos: true, lanches: true }
+            include: { 
+                ingressos: { include: { sessao: { include: { filme: true, sala: true } } } }, 
+                lanches: { include: { lancheCombo: true } } 
+            }
         });
     }
 
     async findOne(id: string) {
         const pedido = await this.prisma.pedido.findUnique({
             where: { id },
-            include: { ingressos: true, lanches: true }
+            include: { 
+                ingressos: { include: { sessao: { include: { filme: true, sala: true } } } }, 
+                lanches: { include: { lancheCombo: true } } 
+            }
         });
         if (!pedido) throw new NotFoundException('Pedido não encontrado');
         return pedido;

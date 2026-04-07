@@ -12,11 +12,16 @@ export class FilmesService {
     }
 
     async findAll() {
-        return this.prisma.filme.findMany();
+        return this.prisma.filme.findMany({
+            include: { genero: true }
+        });
     }
 
     async findOne(id: string) {
-        const filme = await this.prisma.filme.findUnique({ where: { id } });
+        const filme = await this.prisma.filme.findUnique({ 
+            where: { id },
+            include: { genero: true }
+        });
         if (!filme) throw new NotFoundException('Filme não encontrado');
         return filme;
     }

@@ -37,13 +37,21 @@ export class IngressosService {
     }
 
     async findAll() {
-        return this.prisma.ingresso.findMany({ include: { sessao: true, pedido: true } });
+        return this.prisma.ingresso.findMany({ 
+            include: { 
+                sessao: { include: { filme: true, sala: true } }, 
+                pedido: true 
+            } 
+        });
     }
 
     async findOne(id: string) {
         const ingresso = await this.prisma.ingresso.findUnique({
             where: { id },
-            include: { sessao: true, pedido: true },
+            include: { 
+                sessao: { include: { filme: true, sala: true } }, 
+                pedido: true 
+            },
         });
         if (!ingresso) throw new NotFoundException('Ingresso não encontrado');
         return ingresso;
