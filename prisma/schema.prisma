@@ -9,6 +9,34 @@ datasource db {
   provider = "postgresql"
 }
 
+// ========================
+// Enums
+// ========================
+
+enum Perfil {
+  ADMIN
+  CUSTOMER
+}
+
+// ========================
+// Autenticação
+// ========================
+
+model Usuario {
+  id               String   @id @default(uuid())
+  nome             String
+  email            String   @unique
+  senha            String   // Hash bcrypt
+  perfil           Perfil   @default(CUSTOMER)
+  refreshTokenHash String?  // Hash bcrypt do Refresh Token ativo (null = revogado)
+  createdAt        DateTime @default(now())
+  pedidos          Pedido[]
+}
+
+// ========================
+// Domínio Cinema
+// ========================
+
 model Genero {
   id     String  @id @default(uuid())
   nome   String  @unique
@@ -60,10 +88,12 @@ model LancheCombo {
 
 model Pedido {
   id         String             @id @default(uuid())
+  usuarioId  String?
   valorTotal Float
   qtdInteira Int
   qtdMeia    Int
   dataHora   DateTime           @default(now())
+  usuario    Usuario?           @relation(fields: [usuarioId], references: [id])
   ingressos  Ingresso[]
   lanches    ItemPedidoLanche[]
 }

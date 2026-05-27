@@ -1,8 +1,12 @@
-import { Controller, Get, Post, Body, Param, Put, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, UseGuards } from '@nestjs/common';
 import { LancheCombosService } from './lanche-combos.service';
 import { CreateLancheComboDto } from './dto/create-lanche-combo.dto';
 import { UpdateLancheComboDto } from './dto/update-lanche-combo.dto';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Perfil } from '@prisma/client';
 
 @ApiTags('Lanches & Combos')
 @Controller('lanche-combos')
@@ -10,6 +14,9 @@ export class LancheCombosController {
     constructor(private readonly lancheCombosService: LancheCombosService) { }
 
     @Post()
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(Perfil.ADMIN)
+    @ApiBearerAuth('access-token')
     @ApiOperation({ summary: 'Cria um novo lanche ou combo' })
     @ApiResponse({ status: 201, description: 'Lanche/combo criado com sucesso.' })
     @ApiResponse({ status: 400, description: 'Dados inválidos.' })
@@ -33,6 +40,9 @@ export class LancheCombosController {
     }
 
     @Put(':id')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(Perfil.ADMIN)
+    @ApiBearerAuth('access-token')
     @ApiOperation({ summary: 'Atualiza um lanche ou combo pelo ID' })
     @ApiResponse({ status: 200, description: 'Item atualizado com sucesso.' })
     @ApiResponse({ status: 404, description: 'Item não encontrado.' })
@@ -41,6 +51,9 @@ export class LancheCombosController {
     }
 
     @Delete(':id')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(Perfil.ADMIN)
+    @ApiBearerAuth('access-token')
     @ApiOperation({ summary: 'Remove um lanche ou combo pelo ID' })
     @ApiResponse({ status: 200, description: 'Item removido com sucesso.' })
     @ApiResponse({ status: 404, description: 'Item não encontrado.' })

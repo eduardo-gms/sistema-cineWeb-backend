@@ -7,7 +7,7 @@ import { UpdatePedidoDto } from './dto/update-pedido.dto';
 export class PedidosService {
     constructor(private prisma: PrismaService) { }
 
-    async create(data: CreatePedidoDto) {
+    async create(data: CreatePedidoDto, usuarioId?: string) {
         let valorTotalCalculado = 0;
         let inteira = 0;
         let meia = 0;
@@ -80,6 +80,7 @@ export class PedidosService {
 
         return tx.pedido.create({
             data: {
+                usuarioId: usuarioId || null,
                 valorTotal: valorTotalCalculado,
                 qtdInteira: inteira,
                 qtdMeia: meia,
@@ -103,6 +104,17 @@ export class PedidosService {
         });
     }
 
+    async findByUsuario(usuarioId: string) {
+        return this.prisma.pedido.findMany({
+            where: { usuarioId },
+            include: {
+                ingressos: { include: { sessao: { include: { filme: { include: { genero: true } }, sala: true } } } },
+                lanches: { include: { lancheCombo: true } }
+            },
+            orderBy: { dataHora: 'desc' },
+        });
+    }
+
     async findOne(id: string) {
         const pedido = await this.prisma.pedido.findUnique({
             where: { id },
@@ -113,6 +125,79 @@ export class PedidosService {
         });
         if (!pedido) throw new NotFoundException('Pedido não encontrado');
         return pedido;
+    }
+
+    async getComprovante(id: string) {
+        const pedido = await this.prisma.pedido.findUnique({
+            where: { id },
+            include: {
+                usuario: {
+                    select: { id: true, nome: true, email: true },
+                },
+                ingressos: {
+                    include: {
+                        sessao: {
+                            include: {
+                                filme: { include: { genero: true } },
+                                sala: true,
+                            },
+                        },
+                    },
+                },
+                lanches: {
+                    include: { lancheCombo: true },
+                },
+            },
+        });
+
+        if (!pedido) throw new NotFoundException('Pedido não encontrado');
+
+        // Monta o comprovante estruturado
+        return {
+            comprovante: {
+                pedidoId: pedido.id,
+                dataCompra: pedido.dataHora,
+                cliente: pedido.usuario
+                    ? { nome: pedido.usuario.nome, email: pedido.usuario.email }
+                    : null,
+                ingressos: pedido.ingressos.map((ing) => ({
+                    id: ing.id,
+                    filme: ing.sessao.filme.titulo,
+                    genero: ing.sessao.filme.genero?.nome,
+                    classificacao: ing.sessao.filme.classificacaoEtaria,
+                    duracao: `${ing.sessao.filme.duracao} min`,
+                    sala: `Sala ${String(ing.sessao.sala.numero).padStart(2, '0')}`,
+                    data: ing.sessao.data,
+                    horario: ing.sessao.horario,
+                    poltrona: ing.poltrona,
+                    tipo: ing.tipo,
+                    valor: ing.valorPago,
+                    valorFormatado: `R$ ${ing.valorPago.toFixed(2).replace('.', ',')}`,
+                    qrCodeData: JSON.stringify({
+                        ticketId: ing.id,
+                        pedidoId: pedido.id,
+                        sessaoId: ing.sessaoId,
+                        poltrona: ing.poltrona,
+                        hash: `cineweb-${ing.id}-${pedido.id}`,
+                    }),
+                })),
+                lanches: pedido.lanches.map((item) => ({
+                    nome: item.lancheCombo.nome,
+                    quantidade: item.quantidade,
+                    precoUnitario: item.precoUnitario,
+                    subtotal: item.precoUnitario * item.quantidade,
+                    subtotalFormatado: `R$ ${(item.precoUnitario * item.quantidade).toFixed(2).replace('.', ',')}`,
+                })),
+                resumo: {
+                    qtdInteira: pedido.qtdInteira,
+                    qtdMeia: pedido.qtdMeia,
+                    totalIngressos: pedido.ingressos.length,
+                    totalLanches: pedido.lanches.length,
+                    valorTotal: pedido.valorTotal,
+                    valorTotalFormatado: `R$ ${pedido.valorTotal.toFixed(2).replace('.', ',')}`,
+                },
+            },
+        };
     }
 
     async update(id: string, data: UpdatePedidoDto) {

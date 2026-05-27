@@ -1,8 +1,12 @@
-import { Controller, Get, Post, Body, Param, Put, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, UseGuards } from '@nestjs/common';
 import { SessoesService } from './sessoes.service';
 import { CreateSessaoDto } from './dto/create-sessao.dto';
 import { UpdateSessaoDto } from './dto/update-sessao.dto';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Perfil } from '@prisma/client';
 
 @ApiTags('Sessões')
 @Controller('sessoes')
@@ -10,6 +14,9 @@ export class SessoesController {
     constructor(private readonly sessoesService: SessoesService) { }
 
     @Post()
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(Perfil.ADMIN)
+    @ApiBearerAuth('access-token')
     @ApiOperation({ summary: 'Cria uma nova sessão' })
     @ApiResponse({ status: 201, description: 'A sessão foi criada com sucesso.' })
     @ApiResponse({ status: 400, description: 'Dados inválidos.' })
@@ -33,6 +40,9 @@ export class SessoesController {
     }
 
     @Put(':id')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(Perfil.ADMIN)
+    @ApiBearerAuth('access-token')
     @ApiOperation({ summary: 'Atualiza uma sessão pelo ID' })
     @ApiResponse({ status: 200, description: 'Sessão atualizada com sucesso.' })
     @ApiResponse({ status: 404, description: 'Sessão não encontrada.' })
@@ -41,6 +51,9 @@ export class SessoesController {
     }
 
     @Delete(':id')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(Perfil.ADMIN)
+    @ApiBearerAuth('access-token')
     @ApiOperation({ summary: 'Remove uma sessão pelo ID' })
     @ApiResponse({ status: 200, description: 'Sessão removida com sucesso.' })
     @ApiResponse({ status: 404, description: 'Sessão não encontrada.' })

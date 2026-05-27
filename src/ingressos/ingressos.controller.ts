@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Body, Param, Put, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, UseGuards } from '@nestjs/common';
 import { IngressosService } from './ingressos.service';
 import { CreateIngressoDto } from './dto/create-ingresso.dto';
 import { UpdateIngressoDto } from './dto/update-ingresso.dto';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('Ingressos')
 @Controller('ingressos')
@@ -10,6 +11,8 @@ export class IngressosController {
     constructor(private readonly ingressosService: IngressosService) { }
 
     @Post()
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth('access-token')
     @ApiOperation({ summary: 'Cria um novo ingresso avulso' })
     @ApiResponse({ status: 201, description: 'Ingresso criado com sucesso.' })
     @ApiResponse({ status: 400, description: 'Dados inválidos.' })
@@ -33,6 +36,8 @@ export class IngressosController {
     }
 
     @Put(':id')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth('access-token')
     @ApiOperation({ summary: 'Atualiza um ingresso pelo ID' })
     @ApiResponse({ status: 200, description: 'Ingresso atualizado com sucesso.' })
     @ApiResponse({ status: 404, description: 'Ingresso não encontrado.' })
@@ -41,6 +46,8 @@ export class IngressosController {
     }
 
     @Delete(':id')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth('access-token')
     @ApiOperation({ summary: 'Remove um ingresso pelo ID' })
     @ApiResponse({ status: 200, description: 'Ingresso removido com sucesso.' })
     @ApiResponse({ status: 404, description: 'Ingresso não encontrado.' })

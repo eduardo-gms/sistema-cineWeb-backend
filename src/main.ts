@@ -16,10 +16,20 @@ async function bootstrap() {
     forbidNonWhitelisted: true,
   }));
 
+  // Swagger com suporte a Bearer Token para testar rotas protegidas
   const config = new DocumentBuilder()
     .setTitle('CineWeb API')
-    .setDescription('The CineWeb API description')
-    .setVersion('1.0')
+    .setDescription('API do ecossistema CineWeb — Gerenciamento de cinema com autenticação JWT')
+    .setVersion('2.0')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        description: 'Insira o Access Token JWT',
+      },
+      'access-token',
+    )
     .build();
   
   const documentFactory = () => SwaggerModule.createDocument(app, config);
@@ -27,6 +37,7 @@ async function bootstrap() {
 
   const port = process.env.PORT ?? 3000;
   await app.listen(port, '0.0.0.0');
-  console.log(`Application is running on: http://0.0.0.0:${port}`);
+  console.log(`🎬 CineWeb API rodando em: http://0.0.0.0:${port}`);
+  console.log(`📚 Swagger UI disponível em: http://0.0.0.0:${port}/api`);
 }
 bootstrap();

@@ -1,98 +1,165 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# 🎬 CineWeb Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+API REST do ecossistema CineWeb, construída com **NestJS**, **Prisma ORM** e **PostgreSQL**. Responsável por toda a lógica de negócio: gerenciamento de filmes, salas, sessões, pedidos, ingressos, lanches e autenticação JWT.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+---
 
-## Description
+## Stack de Tecnologias
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+| Tecnologia | Versão | Propósito |
+|---|---|---|
+| **Node.js** | 20+ | Runtime JavaScript |
+| **NestJS** | 11.x | Framework backend |
+| **Prisma ORM** | 7.x | ORM e migrations |
+| **PostgreSQL** | 15 | Banco de dados relacional |
+| **Passport + JWT** | - | Autenticação e autorização |
+| **bcrypt** | 6.x | Hash de senhas e refresh tokens |
+| **Swagger** | 11.x | Documentação interativa da API |
+| **Docker** | - | Conteinerização |
 
-## Project setup
+---
 
-```bash
-$ npm install
+## Arquitetura de Autenticação
+
+O sistema implementa **JWT com Refresh Token** e **RBAC (Role-Based Access Control)**:
+
+```
+┌─────────────┐     POST /auth/login      ┌──────────────────┐
+│   Cliente    │ ──────────────────────── │   AuthService     │
+│ (Web/Mobile) │ ◄──── accessToken (15m) ──│                  │
+│              │ ◄──── refreshToken (7d) ──│  bcrypt.hash()   │
+└──────┬───────┘                           │  refreshTokenHash │
+       │                                   │  → salvo no DB    │
+       │  401 Unauthorized                 └──────────────────┘
+       │                                          │
+       │  POST /auth/refresh                      │
+       └──────────────────────────────────────────┘
 ```
 
-## Compile and run the project
+- **Access Token**: Expiração curta (15 minutos), usado em todas as requisições autenticadas.
+- **Refresh Token**: Expiração longa (7 dias), hash bcrypt armazenado no PostgreSQL para revogação.
+- **RBAC**: Perfis `ADMIN` e `CUSTOMER`. Rotas de gerenciamento (CRUD de filmes, salas, etc.) requerem `ADMIN`. Rotas de pedidos requerem apenas autenticação.
+
+### Endpoints de Autenticação
+
+| Método | Rota | Descrição | Auth |
+|--------|------|-----------|------|
+| POST | `/auth/register` | Registro de novo usuário | Não |
+| POST | `/auth/login` | Login com email/senha | Não |
+| POST | `/auth/refresh` | Renovar tokens | Não |
+| POST | `/auth/logout` | Revogar refresh token | Sim |
+| GET | `/auth/me` | Perfil do usuário autenticado | Sim |
+
+### Proteção de Rotas (RBAC)
+
+- **GET** (listagem/busca): Públicas
+- **POST/PUT/DELETE** em filmes, salas, sessões, gêneros, lanches: `ADMIN` obrigatório
+- **POST/PUT/DELETE** em pedidos e ingressos: Autenticação obrigatória (qualquer perfil)
+- **GET /pedidos/meus**: Retorna pedidos do usuário autenticado
+- **GET /pedidos/:id/comprovante**: Retorna comprovante detalhado do pedido
+
+---
+
+## Pré-requisitos
+
+- Node.js 20+
+- PostgreSQL 15+ (ou Docker)
+- npm
+
+---
+
+## Setup Local (sem Docker)
 
 ```bash
-# development
-$ npm run start
+# 1. Instalar dependências
+npm install
 
-# watch mode
-$ npm run start:dev
+# 2. Configurar variáveis de ambiente
+cp .env.example .env
+# Edite o .env com sua DATABASE_URL, JWT_SECRET, etc.
 
-# production mode
-$ npm run start:prod
+# 3. Gerar Prisma Client
+npx prisma generate
+
+# 4. Executar migrations
+npx prisma migrate dev
+
+# 5. Popular dados iniciais (seed)
+npx prisma db seed
+
+# 6. Iniciar em modo desenvolvimento
+npm run start:dev
 ```
 
-## Run tests
+A API estará disponível em `http://localhost:3000`.
+Swagger UI em `http://localhost:3000/api`.
+
+### Variáveis de Ambiente
+
+```env
+DATABASE_URL=postgresql://postgres:60451@localhost:5432/cineweb?schema=public
+JWT_SECRET=cineweb-jwt-secret-dev-2026
+JWT_REFRESH_SECRET=cineweb-jwt-refresh-secret-dev-2026
+PORT=3000
+```
+
+---
+
+## Setup Docker (Individual)
 
 ```bash
-# unit tests
-$ npm run test
+# Criar rede (necessária para comunicação com outros serviços)
+docker network create cineweb-network
 
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+# Subir backend + PostgreSQL
+docker compose up --build
 ```
 
-## Deployment
+---
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+## Setup Docker (Compose Unificado)
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Na raiz do projeto CineWeb (`cineWeb/`):
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+docker compose up --build
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Isso sobe PostgreSQL, Backend, Frontend e Mobile simultaneamente.
 
-## Resources
+---
 
-Check out a few resources that may come in handy when working with NestJS:
+## Seed de Dados
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+O seed cria dois usuários para testes:
 
-## Support
+| Perfil | E-mail | Senha |
+|--------|--------|-------|
+| **ADMIN** | `admin@cineweb.com` | `admin123` |
+| **CUSTOMER** | `cliente@cineweb.com` | `cliente123` |
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+---
 
-## Stay in touch
+## Estrutura do Projeto
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+```
+src/
+├── auth/                  # Módulo de autenticação
+│   ├── auth.module.ts
+│   ├── auth.controller.ts
+│   ├── auth.service.ts
+│   ├── dto/               # DTOs de validação
+│   ├── guards/            # JwtAuthGuard, RolesGuard
+│   ├── strategies/        # JwtStrategy (Passport)
+│   └── decorators/        # @Roles()
+├── filmes/                # CRUD de filmes
+├── salas/                 # CRUD de salas
+├── sessoes/               # CRUD de sessões
+├── pedidos/               # Pedidos + Comprovante
+├── ingressos/             # CRUD de ingressos
+├── generos/               # CRUD de gêneros
+├── lanche-combos/         # CRUD de lanches/combos
+├── prisma/                # PrismaService (global)
+├── app.module.ts
+└── main.ts
+```

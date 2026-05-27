@@ -1,8 +1,12 @@
-import { Controller, Get, Post, Body, Param, Put, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, UseGuards } from '@nestjs/common';
 import { SalasService } from './salas.service';
 import { CreateSalaDto } from './dto/create-sala.dto';
 import { UpdateSalaDto } from './dto/update-sala.dto';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Perfil } from '@prisma/client';
 
 @ApiTags('Salas')
 @Controller('salas')
@@ -10,6 +14,9 @@ export class SalasController {
     constructor(private readonly salasService: SalasService) { }
 
     @Post()
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(Perfil.ADMIN)
+    @ApiBearerAuth('access-token')
     @ApiOperation({ summary: 'Cria uma nova sala' })
     @ApiResponse({ status: 201, description: 'A sala foi criada com sucesso.' })
     @ApiResponse({ status: 400, description: 'Dados inválidos.' })
@@ -33,6 +40,9 @@ export class SalasController {
     }
 
     @Put(':id')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(Perfil.ADMIN)
+    @ApiBearerAuth('access-token')
     @ApiOperation({ summary: 'Atualiza uma sala pelo ID' })
     @ApiResponse({ status: 200, description: 'Sala atualizada com sucesso.' })
     @ApiResponse({ status: 404, description: 'Sala não encontrada.' })
@@ -41,6 +51,9 @@ export class SalasController {
     }
 
     @Delete(':id')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(Perfil.ADMIN)
+    @ApiBearerAuth('access-token')
     @ApiOperation({ summary: 'Remove uma sala pelo ID' })
     @ApiResponse({ status: 200, description: 'Sala removida com sucesso.' })
     @ApiResponse({ status: 404, description: 'Sala não encontrada.' })

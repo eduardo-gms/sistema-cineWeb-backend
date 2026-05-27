@@ -8,10 +8,14 @@ services:
       - '3000:3000'
     environment:
       - DATABASE_URL=postgresql://postgres:60451@cineweb-db:5432/cineweb?schema=public
+      - JWT_SECRET=cineweb-jwt-secret-dev-2026
+      - JWT_REFRESH_SECRET=cineweb-jwt-refresh-secret-dev-2026
+      - PORT=3000
     networks:
       - cineweb-network
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     volumes:
       - .:/app
       - /app/node_modules
@@ -30,6 +34,11 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   pgdata:
