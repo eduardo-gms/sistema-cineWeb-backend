@@ -158,6 +158,20 @@ export class AuthService {
   }
 
   // ──────────────────────────────────────────
+  // RECUPERAÇÃO DE SENHA
+  // ──────────────────────────────────────────
+  async forgotPassword(email: string) {
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { email },
+    });
+    if (usuario) {
+      console.log(`[SIMULAÇÃO] E-mail de recuperação de senha enviado para: ${email}`);
+    }
+    // Sempre retorna sucesso por segurança (evita enumerar contas válidas)
+    return { message: 'Se o e-mail existir em nossa base, você receberá as instruções em breve.' };
+  }
+
+  // ──────────────────────────────────────────
   // PERFIL DO USUÁRIO
   // ──────────────────────────────────────────
   async getProfile(userId: string) {

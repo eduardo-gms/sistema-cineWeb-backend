@@ -71,6 +71,14 @@ export class AuthController {
     return this.authService.logout(req.user.userId);
   }
 
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Recuperar senha de usuário' })
+  @ApiResponse({ status: 200, description: 'E-mail de recuperação simulado com sucesso.' })
+  forgotPassword(@Body('email') email: string) {
+    return this.authService.forgotPassword(email);
+  }
+
   @Get('me')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()

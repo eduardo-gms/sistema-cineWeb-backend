@@ -34,29 +34,6 @@ async function main() {
     console.log(`⏭️  Usuário ADMIN já existe: ${existingAdmin.email}`);
   }
 
-  // ──────────────────────────────────────────
-  // 2. Usuário Cliente (para testes)
-  // ──────────────────────────────────────────
-  const customerEmail = 'cliente@cineweb.com';
-  const existingCustomer = await prisma.usuario.findUnique({
-    where: { email: customerEmail },
-  });
-
-  if (!existingCustomer) {
-    const senhaHash = await bcrypt.hash('cliente123', 10);
-    const customer = await prisma.usuario.create({
-      data: {
-        nome: 'Fulano de Tal',
-        email: customerEmail,
-        senha: senhaHash,
-        perfil: Perfil.CUSTOMER,
-      },
-    });
-    console.log(`✅ Usuário CUSTOMER criado: ${customer.email} (senha: cliente123)`);
-  } else {
-    console.log(`⏭️  Usuário CUSTOMER já existe: ${existingCustomer.email}`);
-  }
-
   console.log('\n🎬 Seed concluído com sucesso!');
 
   await prisma.$disconnect();
